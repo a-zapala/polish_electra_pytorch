@@ -121,10 +121,10 @@ def preprocess_owt_job(tokenizer, src_dir, tmp_dir, trg_dir, job_archives, n_ten
 
 @dataclass(frozen=True)
 class Args:
-    src_dir: arg.Str = 'data/openwebtext'
-    trg_dir: arg.Str = 'data/openwebtext_features'
-    tmp_dir: arg.Str = '/tmp/owt'
-    vocab_file: arg.Str = 'data/vocab.txt'
+    src_dir: arg.Str = 'data/polish_corpus/compressed'
+    trg_dir: arg.Str = 'data/polish_corpus/polish_corpus_features'
+    tmp_dir: arg.Str = '/tmp/polish_corpus'
+    vocab_file: arg.Str = 'data/polish_corpus/nklt_vocab.txt'
     n_dataset_building_processes: arg.Int = 32
     n_tensors_per_file: arg.Int = 2048
     max_seq_length: arg.Int = 128
