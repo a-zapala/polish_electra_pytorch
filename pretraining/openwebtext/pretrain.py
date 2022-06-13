@@ -1,6 +1,8 @@
 import os
 import sys
 
+from clearml import Logger, Task
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
@@ -52,6 +54,7 @@ class Args:
 
     step_log: arg.Int = 10
     step_ckpt: arg.Int = 10_000
+    task_name: arg.Str = "base"
 
 
 ########################################################################################################
@@ -61,7 +64,6 @@ def train(rank, args):
 
     #######################
     ## distributed
-
     if args.distributed_enabled:
         torch.distributed.init_process_group(
             backend='nccl',
@@ -205,6 +207,27 @@ def train(rank, args):
         with torch.cuda.amp.autocast(enabled=args.gpu_mixed_precision):
             loss, loss_mlm, loss_disc, acc_gen, acc_disc, disc_labels, disc_pred = model(input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
 
+        Logger.current_logger().report_scalar(
+            "loss", "loss", iteration=step, value=loss
+        )
+
+        Logger.current_logger().report_scalar(
+            "loss", "loss_mlm", iteration=step, value=loss_mlm
+        )
+
+        Logger.current_logger().report_scalar(
+            "loss", "loss_disc", iteration=step, value=loss_disc
+        )
+
+        Logger.current_logger().report_scalar(
+            "acc", "acc_gen", iteration=step, value=acc_gen
+        )
+
+        Logger.current_logger().report_scalar(
+            "acc", "acc_disc", iteration=step, value=acc_disc
+        )
+
+
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -312,6 +335,8 @@ def main():
     args = arg.parse_to(Args)
     args.output_dir = output_dir
     args.exp_id = exp_id
+
+    task = Task.init(project_name="electra", task_name=args.task_name, reuse_last_task_id=False, output_uri=output_dir)
 
     # distributed
     if args.distributed_enabled:
