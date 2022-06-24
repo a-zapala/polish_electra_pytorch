@@ -207,25 +207,7 @@ def train(rank, args):
         with torch.cuda.amp.autocast(enabled=args.gpu_mixed_precision):
             loss, loss_mlm, loss_disc, acc_gen, acc_disc, disc_labels, disc_pred = model(input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
 
-        Logger.current_logger().report_scalar(
-            "loss", "loss", iteration=step, value=loss
-        )
-
-        Logger.current_logger().report_scalar(
-            "loss", "loss_mlm", iteration=step, value=loss_mlm
-        )
-
-        Logger.current_logger().report_scalar(
-            "loss", "loss_disc", iteration=step, value=loss_disc
-        )
-
-        Logger.current_logger().report_scalar(
-            "acc", "acc_gen", iteration=step, value=acc_gen
-        )
-
-        Logger.current_logger().report_scalar(
-            "acc", "acc_disc", iteration=step, value=acc_disc
-        )
+       
 
 
         scaler.scale(loss).backward()
@@ -250,6 +232,26 @@ def train(rank, args):
         if step % args.step_log == 0:
             sep = ' ' * 2
             logger.info(sep.join([f'{k}: {v[1].format(v[0])}' for (k, v) in metrics.items()]))
+            
+            Logger.current_logger().report_scalar(
+                "loss", "loss", iteration=step, value=loss
+            )
+
+            Logger.current_logger().report_scalar(
+                "loss", "loss_mlm", iteration=step, value=loss_mlm
+            )
+
+            Logger.current_logger().report_scalar(
+                "loss", "loss_disc", iteration=step, value=loss_disc
+            )
+
+            Logger.current_logger().report_scalar(
+                "acc", "acc_gen", iteration=step, value=acc_gen
+            )
+
+            Logger.current_logger().report_scalar(
+                "acc", "acc_disc", iteration=step, value=acc_disc
+            )
 
         if step > 0 and step % 100 == 0:
             t2 = time()
